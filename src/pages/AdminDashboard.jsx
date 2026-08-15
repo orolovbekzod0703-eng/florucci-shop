@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Cropper from 'react-easy-crop'
 import { supabase } from '../lib/supabaseClient.js'
+import { getCroppedImageBlob } from '../lib/cropImage.js'
 
 const EMPTY_FORM = { id: null, name: '', price: '', old_price: '', category: '', tag: '', image_url: '', in_stock: true }
 
@@ -11,6 +13,9 @@ function slugify(label) {
   s = s.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
   return s || `kat-${Date.now()}`
 }
+
+const cropOverlayStyle = { position: 'fixed', inset: 0, background: 'rgba(51,38,31,0.55)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }
+const cropModalStyle = { background: '#fff', borderRadius: 20, padding: 22, width: 420, maxWidth: '94vw' }
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState('products')
@@ -62,6 +67,11 @@ function ProductsPanel() {
   const [uploading, setUploading] = useState(false)
   const [newCategory, setNewCategory] = useState('')
   const [addingCategory, setAddingCategory] = useState(false)
+
+  const [cropSrc, setCropSrc] = useState(null)
+  const [crop, setCrop] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(1)
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
 
   async function load() {
     setLoading(true)
@@ -130,21 +140,44 @@ function ProductsPanel() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  async function handleFileSelect(e) {
+  function handleFileSelect(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    setError('')
+    setCropSrc(URL.createObjectURL(file))
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setCroppedAreaPixels(null)
+    e.target.value = '' // bir xil faylni qayta tanlash imkoni uchun
+  }
+
+  const onCropComplete = useCallback((_area, areaPixels) => {
+    setCroppedAreaPixels(areaPixels)
+  }, [])
+
+  async function confirmCrop() {
+    if (!cropSrc || !croppedAreaPixels) return
     setUploading(true)
     setError('')
-    const path = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`
-    const { error: uploadErr } = await supabase.storage.from('product-images').upload(path, file)
-    if (uploadErr) {
-      setError('Rasm yuklashda xatolik: ' + uploadErr.message)
+    try {
+      const blob = await getCroppedImageBlob(cropSrc, croppedAreaPixels)
+      const path = `${Date.now()}.jpg`
+      const { error: uploadErr } = await supabase.storage.from('product-images').upload(path, blob, { contentType: 'image/jpeg' })
+      if (uploadErr) throw uploadErr
+      const { data } = supabase.storage.from('product-images').getPublicUrl(path)
+      setForm(f => ({ ...f, image_url: data.publicUrl }))
+      cancelCrop()
+    } catch (err) {
+      setError('Rasm yuklashda xatolik: ' + err.message)
+    } finally {
       setUploading(false)
-      return
     }
-    const { data } = supabase.storage.from('product-images').getPublicUrl(path)
-    setForm(f => ({ ...f, image_url: data.publicUrl }))
-    setUploading(false)
+  }
+
+  function cancelCrop() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
+    setCroppedAreaPixels(null)
   }
 
   async function deleteProduct(id) {
@@ -156,6 +189,38 @@ function ProductsPanel() {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 32, alignItems: 'flex-start' }}>
+      {cropSrc && (
+        <div style={cropOverlayStyle}>
+          <div style={cropModalStyle}>
+            <h3 style={{ fontSize: 16, marginBottom: 4 }}>Rasmni kvadrat qilib kesing</h3>
+            <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginBottom: 14 }}>Sudrab joyini tanlang, kattalashtirish uchun g'ildirakni ishlating.</p>
+            <div style={{ position: 'relative', width: '100%', height: 320, background: '#222', borderRadius: 14, overflow: 'hidden' }}>
+              <Cropper
+                image={cropSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                cropShape="rect"
+                showGrid={true}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+            <input
+              type="range" min={1} max={3} step={0.01} value={zoom}
+              onChange={e => setZoom(Number(e.target.value))}
+              style={{ width: '100%', marginTop: 14 }}
+            />
+            <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+              <button type="button" className="btn-primary" onClick={confirmCrop} disabled={uploading} style={{ flex: 1, justifyContent: 'center' }}>
+                {uploading ? 'Yuklanmoqda...' : 'Kesish va yuklash'}
+              </button>
+              <button type="button" className="btn-outline" onClick={cancelCrop} disabled={uploading}>Bekor qilish</button>
+            </div>
+          </div>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="card" style={{ padding: 24, position: 'sticky', top: 20 }}>
         <h3 style={{ fontSize: 17, marginBottom: 18 }}>{form.id ? 'Mahsulotni tahrirlash' : "Yangi mahsulot qo'shish"}</h3>
         <div className="field">
@@ -196,14 +261,13 @@ function ProductsPanel() {
           </select>
         </div>
         <div className="field">
-          <label>Mahsulot rasmi</label>
+          <label>Mahsulot rasmi (kvadrat qilib kesiladi)</label>
           {form.image_url && (
             <div style={{ marginBottom: 10, width: 80, height: 80, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)' }}>
               <img src={form.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           )}
           <input type="file" accept="image/*" onChange={handleFileSelect} disabled={uploading} />
-          {uploading && <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 6 }}>Yuklanmoqda...</p>}
           <input
             style={{ marginTop: 8 }}
             value={form.image_url}
