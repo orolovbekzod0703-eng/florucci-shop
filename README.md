@@ -18,13 +18,24 @@ npm run dev
 
 `.env` faylida Supabase URL va anon kalit allaqachon joylashtirilgan.
 
-## 3. Admin panel
+## 3. Adminlarni cheklash (muhim!)
+
+Standart holatda Supabase login qilgan har qanday foydalanuvchiga ruxsat berardi. Buni tuzatish uchun:
+
+1. SQL Editor'da `supabase_admin_lockdown.sql` faylini ishga tushiring
+2. **Authentication → Users**'da o'zingiz yaratgan foydalanuvchining UID'ini nusxalang
+3. SQL Editor'da: `insert into admin_users (user_id) values ('UID_INGIZ');`
+4. **Authentication → Providers → Email**'da "Allow new users to sign up" ni **o'chirib qo'ying** — shunda hech kim o'zi ro'yxatdan o'ta olmaydi, faqat siz dashboard orqali qo'shgan foydalanuvchilar kira oladi
+
+Yangi admin qo'shmoqchi bo'lsangiz: Authentication → Users'da yangi user yarating, so'ng uning UID'ini `admin_users` jadvaliga qo'shing.
+
+## 4. Admin panel
 
 `/admin/login` manziliga o'ting va Supabase'da yaratgan admin email/parolingiz bilan kiring. U yerdan:
 - Mahsulot qo'shish, tahrirlash, o'chirish
 - Buyurtmalarni ko'rish va holatini yangilash (yangi → tayyorlanmoqda → yuborildi → yetkazildi)
 
-## 4. Vercel'ga deploy qilish
+## 5. Vercel'ga deploy qilish
 
 1. Loyihani GitHub'ga yuklang
 2. [vercel.com](https://vercel.com) → **New Project** → repo'ni tanlang
