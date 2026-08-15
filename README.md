@@ -36,13 +36,22 @@ Admin panelda mahsulotga rasm to'g'ridan-to'g'ri kompyuteringizdan yuklanadi (Su
 1. SQL Editor'da `supabase_storage.sql` faylini ishga tushiring — bu `product-images` nomli bucket yaratadi va faqat adminlarga yuklash/o'chirish huquqini beradi
 2. Boshqa hech narsa kerak emas — admin paneldagi "Mahsulot rasmi" maydonidan fayl tanlab yuklashingiz mumkin
 
-## 5. Admin panel
+## 5. Mijozlar uchun ro'yxatdan o'tish
+
+Mahsulotlarni har kim mehmon sifatida ko'ra oladi, lekin buyurtma berish uchun hisob (email + parol) kerak bo'ladi.
+
+1. SQL Editor'da `supabase_storage.sql`'dan KEYIN `supabase_customer_auth.sql` faylini ishga tushiring
+2. **Authentication → Providers → Email** bo'limida:
+   - "Allow new users to sign up" **YOQILGAN** bo'lishi kerak (agar admin xavfsizligi uchun avval o'chirgan bo'lsangiz, qayta yoqing — endi admin xavfsizligi `admin_users` jadvali orqali ta'minlanadi, umumiy ro'yxatdan o'tishni yopish shart emas)
+   - "Confirm email"ni **o'chirib qo'yish** tavsiya etiladi — aks holda mijoz ro'yxatdan o'tgach, pochtasini tasdiqlamaguncha buyurtma berolmaydi
+
+## 6. Admin panel
 
 `/admin/login` manziliga o'ting va Supabase'da yaratgan admin email/parolingiz bilan kiring. U yerdan:
 - Mahsulot qo'shish, tahrirlash, o'chirish
 - Buyurtmalarni ko'rish va holatini yangilash (yangi → tayyorlanmoqda → yuborildi → yetkazildi)
 
-## 6. Vercel'ga deploy qilish
+## 7. Vercel'ga deploy qilish
 
 1. Loyihani GitHub'ga yuklang
 2. [vercel.com](https://vercel.com) → **New Project** → repo'ni tanlang
@@ -52,6 +61,8 @@ Admin panelda mahsulotga rasm to'g'ridan-to'g'ri kompyuteringizdan yuklanadi (Su
 4. **Deploy** tugmasini bosing
 
 Build buyrug'i: `npm run build`, chiqish papkasi: `dist` (Vercel avtomatik aniqlaydi, chunki bu Vite loyihasi).
+
+`vercel.json` fayli allaqachon qo'shilgan — bu `/admin/login` kabi sahifalarga to'g'ridan-to'g'ri kirilganda 404 chiqmasligini ta'minlaydi. Agar avval deploy qilgan bo'lsangiz, bu o'zgarishni olish uchun qayta deploy qiling (GitHub'ga push qilinganda Vercel avtomatik qayta deploy qiladi).
 
 ## Eslatma
 

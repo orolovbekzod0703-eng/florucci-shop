@@ -1,20 +1,89 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../lib/CartContext.jsx'
 import { supabase } from '../lib/supabaseClient.js'
 
 export default function CartDrawer() {
   const { items, removeItem, setQty, total, open, setOpen, clear } = useCart()
-  const [step, setStep] = useState('cart') // cart | checkout | done
+  const [step, setStep] = useState('cart') // cart | auth | checkout | done
+  const [session, setSession] = useState(null)
+
+  const [authMode, setAuthMode] = useState('login') // login | register
+  const [authForm, setAuthForm] = useState({ email: '', password: '', name: '', phone: '' })
+  const [authLoading, setAuthLoading] = useState(false)
+  const [authError, setAuthError] = useState('')
+  const [authNotice, setAuthNotice] = useState('')
+
   const [form, setForm] = useState({ name: '', phone: '', address: '' })
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session))
+    const { data: listener } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
   if (!open) return null
+
+  function goToCheckout() {
+    if (session) {
+      const meta = session.user.user_metadata || {}
+      setForm(f => ({ ...f, name: meta.name || f.name, phone: meta.phone || f.phone }))
+      setStep('checkout')
+    } else {
+      setStep('auth')
+    }
+  }
+
+  async function handleAuth(e) {
+    e.preventDefault()
+    setAuthLoading(true)
+    setAuthError('')
+    setAuthNotice('')
+
+    if (authMode === 'register') {
+      if (!authForm.name || !authForm.phone) {
+        setAuthError('Ism va telefon raqamni kiriting')
+        setAuthLoading(false)
+        return
+      }
+      const { data, error } = await supabase.auth.signUp({
+        email: authForm.email,
+        password: authForm.password,
+        options: { data: { name: authForm.name, phone: authForm.phone } },
+      })
+      setAuthLoading(false)
+      if (error) { setAuthError(error.message); return }
+      if (!data.session) {
+        setAuthNotice("Ro'yxatdan o'tdingiz. Agar pochta tasdiqlash yoqilgan bo'lsa, emailingizni tasdiqlab, so'ng qayta kiring.")
+        setAuthMode('login')
+        return
+      }
+      setSession(data.session)
+      setForm(f => ({ ...f, name: authForm.name, phone: authForm.phone }))
+      setStep('checkout')
+    } else {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: authForm.email,
+        password: authForm.password,
+      })
+      setAuthLoading(false)
+      if (error) { setAuthError("Email yoki parol noto'g'ri"); return }
+      setSession(data.session)
+      const meta = data.session.user.user_metadata || {}
+      setForm(f => ({ ...f, name: meta.name || f.name, phone: meta.phone || f.phone }))
+      setStep('checkout')
+    }
+  }
 
   async function submitOrder(e) {
     e.preventDefault()
     if (!form.name || !form.phone) {
       setError('Ism va telefon raqamni kiriting')
+      return
+    }
+    if (!session) {
+      setStep('auth')
       return
     }
     setSubmitting(true)
@@ -28,6 +97,7 @@ export default function CartDrawer() {
           address: form.address,
           total,
           status: 'yangi',
+          user_id: session.user.id,
         })
         .select()
         .single()
@@ -57,7 +127,10 @@ export default function CartDrawer() {
     setOpen(false)
     setStep('cart')
     setForm({ name: '', phone: '', address: '' })
+    setAuthForm({ email: '', password: '', name: '', phone: '' })
     setError('')
+    setAuthError('')
+    setAuthNotice('')
   }
 
   return (
@@ -66,6 +139,7 @@ export default function CartDrawer() {
         <div style={headStyle}>
           <h3 style={{ fontSize: 20 }}>
             {step === 'cart' && 'Savat'}
+            {step === 'auth' && (authMode === 'login' ? 'Kirish' : "Ro'yxatdan o'tish")}
             {step === 'checkout' && "Buyurtmani rasmiylashtirish"}
             {step === 'done' && 'Rahmat!'}
           </h3>
@@ -100,12 +174,57 @@ export default function CartDrawer() {
                   <span>Jami</span>
                   <strong>{total.toLocaleString('uz-UZ')} so'm</strong>
                 </div>
-                <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 14 }} onClick={() => setStep('checkout')}>
+                <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 14 }} onClick={goToCheckout}>
                   Buyurtma berish →
                 </button>
               </>
             )}
           </>
+        )}
+
+        {step === 'auth' && (
+          <div style={{ marginTop: 18 }}>
+            <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginBottom: 16 }}>
+              Buyurtma berish uchun hisobingiz bo'lishi kerak. Mahsulotlarni ko'rish uchun hisob shart emas.
+            </p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 18 }}>
+              <button
+                onClick={() => { setAuthMode('login'); setAuthError(''); setAuthNotice('') }}
+                style={authTabBtn(authMode === 'login')}
+              >Kirish</button>
+              <button
+                onClick={() => { setAuthMode('register'); setAuthError(''); setAuthNotice('') }}
+                style={authTabBtn(authMode === 'register')}
+              >Ro'yxatdan o'tish</button>
+            </div>
+            <form onSubmit={handleAuth}>
+              {authMode === 'register' && (
+                <>
+                  <div className="field">
+                    <label>Ismingiz</label>
+                    <input value={authForm.name} onChange={e => setAuthForm({ ...authForm, name: e.target.value })} required />
+                  </div>
+                  <div className="field">
+                    <label>Telefon raqam</label>
+                    <input value={authForm.phone} onChange={e => setAuthForm({ ...authForm, phone: e.target.value })} placeholder="+998 90 123 45 67" required />
+                  </div>
+                </>
+              )}
+              <div className="field">
+                <label>Email</label>
+                <input type="email" value={authForm.email} onChange={e => setAuthForm({ ...authForm, email: e.target.value })} required />
+              </div>
+              <div className="field">
+                <label>Parol</label>
+                <input type="password" value={authForm.password} onChange={e => setAuthForm({ ...authForm, password: e.target.value })} required minLength={6} />
+              </div>
+              {authError && <p style={{ color: 'var(--coral)', fontSize: 13, marginBottom: 12 }}>{authError}</p>}
+              {authNotice && <p style={{ color: 'var(--olive)', fontSize: 13, marginBottom: 12 }}>{authNotice}</p>}
+              <button className="btn-primary" type="submit" disabled={authLoading} style={{ width: '100%', justifyContent: 'center' }}>
+                {authLoading ? '...' : authMode === 'login' ? 'Kirish' : "Ro'yxatdan o'tish"}
+              </button>
+            </form>
+          </div>
         )}
 
         {step === 'checkout' && (
@@ -154,3 +273,11 @@ const itemRow = { display: 'flex', alignItems: 'center', gap: 10, background: '#
 const qtyBtn = { width: 26, height: 26, borderRadius: '50%', border: '1px solid var(--line)', background: '#fff', fontSize: 15 }
 const removeBtn = { background: 'none', border: 'none', color: 'var(--ink-soft)', fontSize: 14 }
 const totalRow = { display: 'flex', justifyContent: 'space-between', fontSize: 15, marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--line)' }
+function authTabBtn(active) {
+  return {
+    flex: 1, padding: '10px 0', borderRadius: 100, fontWeight: 700, fontSize: 13.5,
+    border: active ? 'none' : '1.5px solid var(--line)',
+    background: active ? 'var(--ink)' : '#fff',
+    color: active ? '#fff' : 'var(--ink)',
+  }
+}
