@@ -45,13 +45,21 @@ Mahsulotlarni har kim mehmon sifatida ko'ra oladi, lekin buyurtma berish uchun h
    - "Allow new users to sign up" **YOQILGAN** bo'lishi kerak (agar admin xavfsizligi uchun avval o'chirgan bo'lsangiz, qayta yoqing — endi admin xavfsizligi `admin_users` jadvali orqali ta'minlanadi, umumiy ro'yxatdan o'tishni yopish shart emas)
    - "Confirm email"ni **o'chirib qo'yish** tavsiya etiladi — aks holda mijoz ro'yxatdan o'tgach, pochtasini tasdiqlamaguncha buyurtma berolmaydi
 
-## 6. Admin panel
+## 6. Kategoriyalarni boshqarish
+
+Kategoriyalar endi bazada saqlanadi, admin panel orqali yangi kategoriya qo'shishingiz mumkin.
+
+1. SQL Editor'da `supabase_categories.sql` faylini ishga tushiring — bu avvalgi 5 ta kategoriyangizni saqlab qolgan holda `categories` jadvalini yaratadi
+2. Admin panel → Mahsulotlar → forma ichidagi "Kategoriya" maydonining ostida yangi kategoriya nomini yozib "Qo'shish"ni bosing — u darhol tanlov ro'yxatiga va saytga qo'shiladi
+3. Agar biror kategoriyada hali mahsulot bo'lmasa, saytda "Bu bo'limga hali mahsulot qo'shilmagan" deb ko'rsatiladi (kategoriya yashirinmaydi)
+
+## 7. Admin panel
 
 `/admin/login` manziliga o'ting va Supabase'da yaratgan admin email/parolingiz bilan kiring. U yerdan:
 - Mahsulot qo'shish, tahrirlash, o'chirish
 - Buyurtmalarni ko'rish va holatini yangilash (yangi → tayyorlanmoqda → yuborildi → yetkazildi)
 
-## 7. Vercel'ga deploy qilish
+## 8. Vercel'ga deploy qilish
 
 1. Loyihani GitHub'ga yuklang
 2. [vercel.com](https://vercel.com) → **New Project** → repo'ni tanlang

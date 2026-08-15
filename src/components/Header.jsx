@@ -1,17 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCart } from '../lib/CartContext.jsx'
-
-const CATEGORIES = [
-  { label: "O'yinchoq va kitob", value: 'toys' },
-  { label: 'Qizlar kiyimi', value: 'girls' },
-  { label: "O'g'il bolalar", value: 'boys' },
-  { label: 'Bolalar xonasi', value: 'nursery' },
-  { label: "Sovg'alar", value: 'gifts' },
-]
+import { supabase } from '../lib/supabaseClient.js'
 
 export default function Header() {
   const { count, setOpen } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [categories, setCategories] = useState([])
+
+  useEffect(() => {
+    supabase.from('categories').select('*').order('created_at', { ascending: true }).then(({ data }) => {
+      setCategories(data || [])
+    })
+  }, [])
 
   return (
     <>
@@ -36,8 +36,8 @@ export default function Header() {
             </div>
           </a>
           <nav style={linksStyle} className="nav-links-desktop">
-            {CATEGORIES.map(c => (
-              <a key={c.value} href={`#cat-${c.value}`} style={{ fontWeight: 700, fontSize: 14.5 }}>{c.label}</a>
+            {categories.map(c => (
+              <a key={c.id} href={`#cat-${c.slug}`} style={{ fontWeight: 700, fontSize: 14.5 }}>{c.label}</a>
             ))}
           </nav>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
@@ -55,8 +55,8 @@ export default function Header() {
         </div>
         {menuOpen && (
           <nav style={mobileNavStyle}>
-            {CATEGORIES.map(c => (
-              <a key={c.value} href={`#cat-${c.value}`} onClick={() => setMenuOpen(false)} style={{ fontWeight: 700, fontSize: 15, padding: '10px 0' }}>{c.label}</a>
+            {categories.map(c => (
+              <a key={c.id} href={`#cat-${c.slug}`} onClick={() => setMenuOpen(false)} style={{ fontWeight: 700, fontSize: 15, padding: '10px 0' }}>{c.label}</a>
             ))}
           </nav>
         )}

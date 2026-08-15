@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
 
-const CATEGORIES = [
-  { label: "O'yinchoq va kitob", value: 'toys' },
-  { label: 'Qizlar kiyimi', value: 'girls' },
-  { label: "O'g'il bolalar", value: 'boys' },
-  { label: 'Bolalar xonasi', value: 'nursery' },
-  { label: "Sovg'alar", value: 'gifts' },
-]
+const EMPTY_FORM = { id: null, name: '', price: '', old_price: '', category: '', tag: '', image_url: '', in_stock: true }
 
-const EMPTY_FORM = { id: null, name: '', price: '', old_price: '', category: 'toys', tag: '', image_url: '', in_stock: true }
+function slugify(label) {
+  const map = { "o'": 'o', "g'": 'g', ş: 's', ç: 'c' }
+  let s = label.toLowerCase()
+  Object.entries(map).forEach(([k, v]) => { s = s.split(k).join(v) })
+  s = s.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return s || `kat-${Date.now()}`
+}
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState('products')
@@ -54,21 +54,42 @@ function tabBtn(active) {
 
 function ProductsPanel() {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [newCategory, setNewCategory] = useState('')
+  const [addingCategory, setAddingCategory] = useState(false)
 
   async function load() {
     setLoading(true)
-    const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false })
+    const [{ data, error }, { data: catData }] = await Promise.all([
+      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      supabase.from('categories').select('*').order('created_at', { ascending: true }),
+    ])
     if (error) setError(error.message)
     else setProducts(data || [])
+    setCategories(catData || [])
+    setForm(f => (f.category ? f : { ...f, category: catData?.[0]?.slug || '' }))
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
+
+  async function addCategory() {
+    if (!newCategory.trim()) return
+    setAddingCategory(true)
+    setError('')
+    const slug = slugify(newCategory.trim())
+    const { data, error } = await supabase.from('categories').insert({ label: newCategory.trim(), slug }).select().single()
+    setAddingCategory(false)
+    if (error) { setError(error.message); return }
+    setCategories(prev => [...prev, data])
+    setForm(f => ({ ...f, category: data.slug }))
+    setNewCategory('')
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -101,7 +122,7 @@ function ProductsPanel() {
       name: p.name,
       price: p.price,
       old_price: p.old_price || '',
-      category: p.category || 'toys',
+      category: p.category || (categories[0]?.slug || ''),
       tag: p.tag || '',
       image_url: p.image_url || '',
       in_stock: p.in_stock !== false,
@@ -152,8 +173,19 @@ function ProductsPanel() {
         <div className="field">
           <label>Kategoriya</label>
           <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-            {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+            {categories.map(c => <option key={c.id} value={c.slug}>{c.label}</option>)}
           </select>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <input
+              value={newCategory}
+              onChange={e => setNewCategory(e.target.value)}
+              placeholder="Yangi kategoriya nomi"
+              style={{ flex: 1 }}
+            />
+            <button type="button" className="btn-outline" onClick={addCategory} disabled={addingCategory} style={{ padding: '9px 16px', fontSize: 13 }}>
+              {addingCategory ? '...' : "Qo'shish"}
+            </button>
+          </div>
         </div>
         <div className="field">
           <label>Belgi</label>
@@ -205,7 +237,7 @@ function ProductsPanel() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 700, fontSize: 14.5 }}>{p.name}</div>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>
-                    {CATEGORIES.find(c => c.value === p.category)?.label || p.category} · {Number(p.price).toLocaleString('uz-UZ')} so'm
+                    {categories.find(c => c.slug === p.category)?.label || p.category} · {Number(p.price).toLocaleString('uz-UZ')} so'm
                     {p.in_stock === false && ' · Tugagan'}
                   </div>
                 </div>

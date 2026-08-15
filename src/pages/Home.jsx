@@ -2,28 +2,22 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient.js'
 import ProductCard from '../components/ProductCard.jsx'
 
-const CATEGORIES = [
-  { label: "O'yinchoq va kitob", value: 'toys' },
-  { label: 'Qizlar kiyimi', value: 'girls' },
-  { label: "O'g'il bolalar", value: 'boys' },
-  { label: 'Bolalar xonasi', value: 'nursery' },
-  { label: "Sovg'alar", value: 'gifts' },
-]
-
 export default function Home() {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
 
   useEffect(() => {
     async function load() {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (error) setError(error.message)
-      else setProducts(data || [])
+      const [{ data: productsData, error: productsErr }, { data: categoriesData }] = await Promise.all([
+        supabase.from('products').select('*').order('created_at', { ascending: false }),
+        supabase.from('categories').select('*').order('created_at', { ascending: true }),
+      ])
+      if (productsErr) setError(productsErr.message)
+      else setProducts(productsData || [])
+      setCategories(categoriesData || [])
       setLoading(false)
     }
     load()
@@ -32,6 +26,8 @@ export default function Home() {
   const visibleProducts = query.trim()
     ? products.filter(p => p.name.toLowerCase().includes(query.trim().toLowerCase()))
     : products
+
+  const searching = query.trim().length > 0
 
   return (
     <div id="top">
@@ -68,36 +64,39 @@ export default function Home() {
 
         {loading && <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>Yuklanmoqda...</p>}
         {error && <p style={{ textAlign: 'center', color: 'var(--coral)' }}>Xatolik: {error}</p>}
-        {!loading && !error && products.length === 0 && (
-          <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>
-            Hozircha mahsulot yo'q. Admin panel orqali qo'shishingiz mumkin.
-          </p>
-        )}
 
-        {!loading && !error && products.length > 0 && visibleProducts.length === 0 && (
-          <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>"{query}" bo'yicha hech narsa topilmadi.</p>
-        )}
+        {!loading && !error && (
+          <>
+            {categories.map(cat => {
+              const catProducts = visibleProducts.filter(p => p.category === cat.slug)
+              if (searching && catProducts.length === 0) return null
+              return (
+                <div key={cat.id} id={`cat-${cat.slug}`} style={{ marginBottom: 48 }}>
+                  <h3 style={{ fontSize: 20, marginBottom: 18 }}>{cat.label}</h3>
+                  {catProducts.length === 0 ? (
+                    <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>Bu bo'limga hali mahsulot qo'shilmagan.</p>
+                  ) : (
+                    <div style={gridStyle}>
+                      {catProducts.map(p => <ProductCard key={p.id} product={p} />)}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
 
-        {CATEGORIES.map(cat => {
-          const catProducts = visibleProducts.filter(p => p.category === cat.value)
-          if (catProducts.length === 0) return null
-          return (
-            <div key={cat.value} id={`cat-${cat.value}`} style={{ marginBottom: 48 }}>
-              <h3 style={{ fontSize: 20, marginBottom: 18 }}>{cat.label}</h3>
-              <div style={gridStyle}>
-                {catProducts.map(p => <ProductCard key={p.id} product={p} />)}
+            {visibleProducts.some(p => !p.category) && (
+              <div style={{ marginBottom: 48 }}>
+                <h3 style={{ fontSize: 20, marginBottom: 18 }}>Boshqa mahsulotlar</h3>
+                <div style={gridStyle}>
+                  {visibleProducts.filter(p => !p.category).map(p => <ProductCard key={p.id} product={p} />)}
+                </div>
               </div>
-            </div>
-          )
-        })}
+            )}
 
-        {!loading && visibleProducts.some(p => !p.category) && (
-          <div style={{ marginBottom: 48 }}>
-            <h3 style={{ fontSize: 20, marginBottom: 18 }}>Boshqa mahsulotlar</h3>
-            <div style={gridStyle}>
-              {visibleProducts.filter(p => !p.category).map(p => <ProductCard key={p.id} product={p} />)}
-            </div>
-          </div>
+            {searching && visibleProducts.length === 0 && (
+              <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>"{query}" bo'yicha hech narsa topilmadi.</p>
+            )}
+          </>
         )}
       </section>
     </div>
