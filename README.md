@@ -29,13 +29,20 @@ Standart holatda Supabase login qilgan har qanday foydalanuvchiga ruxsat berardi
 
 Yangi admin qo'shmoqchi bo'lsangiz: Authentication → Users'da yangi user yarating, so'ng uning UID'ini `admin_users` jadvaliga qo'shing.
 
-## 4. Admin panel
+## 4. Rasm yuklashni yoqish
+
+Admin panelda mahsulotga rasm to'g'ridan-to'g'ri kompyuteringizdan yuklanadi (Supabase Storage'da saqlanadi). Buni faollashtirish uchun:
+
+1. SQL Editor'da `supabase_storage.sql` faylini ishga tushiring — bu `product-images` nomli bucket yaratadi va faqat adminlarga yuklash/o'chirish huquqini beradi
+2. Boshqa hech narsa kerak emas — admin paneldagi "Mahsulot rasmi" maydonidan fayl tanlab yuklashingiz mumkin
+
+## 5. Admin panel
 
 `/admin/login` manziliga o'ting va Supabase'da yaratgan admin email/parolingiz bilan kiring. U yerdan:
 - Mahsulot qo'shish, tahrirlash, o'chirish
 - Buyurtmalarni ko'rish va holatini yangilash (yangi → tayyorlanmoqda → yuborildi → yetkazildi)
 
-## 5. Vercel'ga deploy qilish
+## 6. Vercel'ga deploy qilish
 
 1. Loyihani GitHub'ga yuklang
 2. [vercel.com](https://vercel.com) → **New Project** → repo'ni tanlang

@@ -58,6 +58,7 @@ function ProductsPanel() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -108,6 +109,23 @@ function ProductsPanel() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  async function handleFileSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setError('')
+    const path = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`
+    const { error: uploadErr } = await supabase.storage.from('product-images').upload(path, file)
+    if (uploadErr) {
+      setError('Rasm yuklashda xatolik: ' + uploadErr.message)
+      setUploading(false)
+      return
+    }
+    const { data } = supabase.storage.from('product-images').getPublicUrl(path)
+    setForm(f => ({ ...f, image_url: data.publicUrl }))
+    setUploading(false)
+  }
+
   async function deleteProduct(id) {
     if (!confirm("Mahsulotni o'chirmoqchimisiz?")) return
     const { error } = await supabase.from('products').delete().eq('id', id)
@@ -146,8 +164,20 @@ function ProductsPanel() {
           </select>
         </div>
         <div className="field">
-          <label>Rasm URL (ixtiyoriy)</label>
-          <input value={form.image_url} onChange={e => setForm({ ...form, image_url: e.target.value })} placeholder="https://..." />
+          <label>Mahsulot rasmi</label>
+          {form.image_url && (
+            <div style={{ marginBottom: 10, width: 80, height: 80, borderRadius: 10, overflow: 'hidden', border: '1px solid var(--line)' }}>
+              <img src={form.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          )}
+          <input type="file" accept="image/*" onChange={handleFileSelect} disabled={uploading} />
+          {uploading && <p style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 6 }}>Yuklanmoqda...</p>}
+          <input
+            style={{ marginTop: 8 }}
+            value={form.image_url}
+            onChange={e => setForm({ ...form, image_url: e.target.value })}
+            placeholder="yoki rasm havolasini (URL) qo'lda kiriting"
+          />
         </div>
         <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" id="in_stock" style={{ width: 'auto' }} checked={form.in_stock} onChange={e => setForm({ ...form, in_stock: e.target.checked })} />
