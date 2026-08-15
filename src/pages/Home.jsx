@@ -14,6 +14,7 @@ export default function Home() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -27,6 +28,10 @@ export default function Home() {
     }
     load()
   }, [])
+
+  const visibleProducts = query.trim()
+    ? products.filter(p => p.name.toLowerCase().includes(query.trim().toLowerCase()))
+    : products
 
   return (
     <div id="top">
@@ -44,9 +49,21 @@ export default function Home() {
       </section>
 
       <section id="catalog" className="wrap" style={{ padding: '60px 0' }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <div className="eyebrow" style={{ justifyContent: 'center', display: 'flex', marginBottom: 10 }}>Katalog</div>
           <h2 style={{ fontSize: 32 }}>Barcha mahsulotlar</h2>
+        </div>
+
+        <div style={{ maxWidth: 420, margin: '0 auto 40px', position: 'relative' }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" strokeWidth="2" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}>
+            <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+          </svg>
+          <input
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="Mahsulot qidirish..."
+            style={{ width: '100%', padding: '13px 16px 13px 42px', borderRadius: 100, border: '1.5px solid var(--line)', fontSize: 14.5, background: '#fff' }}
+          />
         </div>
 
         {loading && <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>Yuklanmoqda...</p>}
@@ -57,8 +74,12 @@ export default function Home() {
           </p>
         )}
 
+        {!loading && !error && products.length > 0 && visibleProducts.length === 0 && (
+          <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>"{query}" bo'yicha hech narsa topilmadi.</p>
+        )}
+
         {CATEGORIES.map(cat => {
-          const catProducts = products.filter(p => p.category === cat.value)
+          const catProducts = visibleProducts.filter(p => p.category === cat.value)
           if (catProducts.length === 0) return null
           return (
             <div key={cat.value} id={`cat-${cat.value}`} style={{ marginBottom: 48 }}>
@@ -70,11 +91,11 @@ export default function Home() {
           )
         })}
 
-        {!loading && products.some(p => !p.category) && (
+        {!loading && visibleProducts.some(p => !p.category) && (
           <div style={{ marginBottom: 48 }}>
             <h3 style={{ fontSize: 20, marginBottom: 18 }}>Boshqa mahsulotlar</h3>
             <div style={gridStyle}>
-              {products.filter(p => !p.category).map(p => <ProductCard key={p.id} product={p} />)}
+              {visibleProducts.filter(p => !p.category).map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           </div>
         )}

@@ -79,3 +79,7 @@ input, textarea, select{font-family:inherit;}
 @media(max-width:600px){
   .wrap{padding:0 18px;}
 }
+@media(max-width:900px){
+  .nav-links-desktop{display:none !important;}
+  .mobile-menu-btn{display:flex !important; align-items:center; justify-content:center;}
+}

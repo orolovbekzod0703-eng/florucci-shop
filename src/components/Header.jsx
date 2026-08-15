@@ -48,8 +48,18 @@ export default function Header() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#33261F" strokeWidth="1.8"><path d="M6 6h15l-1.5 9h-12z"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M2 3h2l1 3"/></svg>
               {count > 0 && <span style={dotStyle}>{count}</span>}
             </button>
+            <button className="mobile-menu-btn" onClick={() => setMenuOpen(o => !o)} style={mobileBtnStyle} aria-label="Menyu">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#33261F" strokeWidth="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            </button>
           </div>
         </div>
+        {menuOpen && (
+          <nav style={mobileNavStyle}>
+            {CATEGORIES.map(c => (
+              <a key={c.value} href={`#cat-${c.value}`} onClick={() => setMenuOpen(false)} style={{ fontWeight: 700, fontSize: 15, padding: '10px 0' }}>{c.label}</a>
+            ))}
+          </nav>
+        )}
       </header>
     </>
   )
@@ -63,3 +73,5 @@ const logoStyle = { display: 'flex', alignItems: 'center', gap: 10 }
 const linksStyle = { display: 'flex', gap: 28 }
 const cartBtnStyle = { position: 'relative', background: 'none', border: 'none' }
 const dotStyle = { position: 'absolute', top: -8, right: -9, background: 'var(--coral)', color: '#fff', fontSize: 10, fontWeight: 800, width: 16, height: 16, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }
+const mobileBtnStyle = { background: 'none', border: 'none', display: 'none' }
+const mobileNavStyle = { display: 'flex', flexDirection: 'column', padding: '4px 32px 18px', borderTop: '1px solid var(--line)' }
