@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useCart } from '../lib/CartContext.jsx'
 import { supabase } from '../lib/supabaseClient.js'
 
@@ -36,8 +37,9 @@ export default function Header() {
             </div>
           </a>
           <nav style={linksStyle} className="nav-links-desktop">
+            <Link to="/" style={{ fontWeight: 700, fontSize: 14.5 }}>Hamma mahsulotlar</Link>
             {categories.map(c => (
-              <a key={c.id} href={`#cat-${c.slug}`} style={{ fontWeight: 700, fontSize: 14.5 }}>{c.label}</a>
+              <Link key={c.id} to={`/?category=${c.slug}#catalog`} style={{ fontWeight: 700, fontSize: 14.5 }}>{c.label}</Link>
             ))}
           </nav>
           <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
@@ -55,8 +57,9 @@ export default function Header() {
         </div>
         {menuOpen && (
           <nav style={mobileNavStyle}>
+            <Link to="/" onClick={() => setMenuOpen(false)} style={{ fontWeight: 700, fontSize: 15, padding: '10px 0' }}>Hamma mahsulotlar</Link>
             {categories.map(c => (
-              <a key={c.id} href={`#cat-${c.slug}`} onClick={() => setMenuOpen(false)} style={{ fontWeight: 700, fontSize: 15, padding: '10px 0' }}>{c.label}</a>
+              <Link key={c.id} to={`/?category=${c.slug}#catalog`} onClick={() => setMenuOpen(false)} style={{ fontWeight: 700, fontSize: 15, padding: '10px 0' }}>{c.label}</Link>
             ))}
           </nav>
         )}

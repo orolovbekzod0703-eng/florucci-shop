@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient.js'
 import ProductCard from '../components/ProductCard.jsx'
 
@@ -8,6 +9,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const selectedCategory = searchParams.get('category') || null
 
   useEffect(() => {
     async function load() {
@@ -23,11 +27,22 @@ export default function Home() {
     load()
   }, [])
 
-  const visibleProducts = query.trim()
+  function selectCategory(slug) {
+    if (slug) setSearchParams({ category: slug })
+    else setSearchParams({})
+    document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  const searchFiltered = query.trim()
     ? products.filter(p => p.name.toLowerCase().includes(query.trim().toLowerCase()))
     : products
 
+  const visibleProducts = selectedCategory
+    ? searchFiltered.filter(p => p.category === selectedCategory)
+    : searchFiltered
+
   const searching = query.trim().length > 0
+  const activeCategoryLabel = categories.find(c => c.slug === selectedCategory)?.label
 
   return (
     <div id="top">
@@ -47,10 +62,10 @@ export default function Home() {
       <section id="catalog" className="wrap" style={{ padding: '60px 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <div className="eyebrow" style={{ justifyContent: 'center', display: 'flex', marginBottom: 10 }}>Katalog</div>
-          <h2 style={{ fontSize: 32 }}>Barcha mahsulotlar</h2>
+          <h2 style={{ fontSize: 32 }}>{activeCategoryLabel || 'Barcha mahsulotlar'}</h2>
         </div>
 
-        <div style={{ maxWidth: 420, margin: '0 auto 40px', position: 'relative' }}>
+        <div style={{ maxWidth: 420, margin: '0 auto 24px', position: 'relative' }}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" strokeWidth="2" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)' }}>
             <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
           </svg>
@@ -62,41 +77,28 @@ export default function Home() {
           />
         </div>
 
+        <div style={pillRowStyle}>
+          <button onClick={() => selectCategory(null)} style={pillStyle(!selectedCategory)}>Hamma mahsulotlar</button>
+          {categories.map(c => (
+            <button key={c.id} onClick={() => selectCategory(c.slug)} style={pillStyle(selectedCategory === c.slug)}>{c.label}</button>
+          ))}
+        </div>
+
         {loading && <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>Yuklanmoqda...</p>}
         {error && <p style={{ textAlign: 'center', color: 'var(--coral)' }}>Xatolik: {error}</p>}
 
         {!loading && !error && (
-          <>
-            {categories.map(cat => {
-              const catProducts = visibleProducts.filter(p => p.category === cat.slug)
-              if (searching && catProducts.length === 0) return null
-              return (
-                <div key={cat.id} id={`cat-${cat.slug}`} style={{ marginBottom: 48 }}>
-                  <h3 style={{ fontSize: 20, marginBottom: 18 }}>{cat.label}</h3>
-                  {catProducts.length === 0 ? (
-                    <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>Bu bo'limga hali mahsulot qo'shilmagan.</p>
-                  ) : (
-                    <div style={gridStyle}>
-                      {catProducts.map(p => <ProductCard key={p.id} product={p} />)}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-
-            {visibleProducts.some(p => !p.category) && (
-              <div style={{ marginBottom: 48 }}>
-                <h3 style={{ fontSize: 20, marginBottom: 18 }}>Boshqa mahsulotlar</h3>
-                <div style={gridStyle}>
-                  {visibleProducts.filter(p => !p.category).map(p => <ProductCard key={p.id} product={p} />)}
-                </div>
-              </div>
-            )}
-
-            {searching && visibleProducts.length === 0 && (
-              <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>"{query}" bo'yicha hech narsa topilmadi.</p>
-            )}
-          </>
+          visibleProducts.length === 0 ? (
+            <p style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>
+              {searching
+                ? `"${query}" bo'yicha hech narsa topilmadi.`
+                : "Bu bo'limga hali mahsulot qo'shilmagan."}
+            </p>
+          ) : (
+            <div style={gridStyle}>
+              {visibleProducts.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )
         )}
       </section>
     </div>
@@ -104,3 +106,15 @@ export default function Home() {
 }
 
 const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }
+const pillRowStyle = { display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 36 }
+function pillStyle(active) {
+  return {
+    padding: '9px 18px',
+    borderRadius: 100,
+    fontSize: 13.5,
+    fontWeight: 700,
+    border: active ? 'none' : '1.5px solid var(--line)',
+    background: active ? 'var(--coral)' : '#fff',
+    color: active ? '#fff' : 'var(--ink)',
+  }
+}
