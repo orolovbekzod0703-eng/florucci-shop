@@ -25,9 +25,9 @@ export default function ProductCard({ product }) {
           </svg>
         )}
       </div>
-      <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div className="product-info" style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', flex: 1 }}>
         <h3 style={{ fontSize: 14.5, fontWeight: 700, marginBottom: 6 }}>{product.name}</h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+        <div className="price-row" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <span style={{ fontWeight: 800, fontSize: 15, color: product.tag === 'sale' ? 'var(--coral)' : 'var(--ink)' }}>
             {Number(product.price).toLocaleString('uz-UZ')} so'm
           </span>

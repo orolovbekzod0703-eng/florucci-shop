@@ -95,7 +95,7 @@ export default function Home() {
                 : "Bu bo'limga hali mahsulot qo'shilmagan."}
             </p>
           ) : (
-            <div style={gridStyle}>
+            <div className="product-grid">
               {visibleProducts.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           )
@@ -105,7 +105,6 @@ export default function Home() {
   )
 }
 
-const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }
 const pillRowStyle = { display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 36 }
 function pillStyle(active) {
   return {

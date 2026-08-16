@@ -79,6 +79,23 @@ input, textarea, select{font-family:inherit;}
 @media(max-width:600px){
   .wrap{padding:0 18px;}
 }
+
+.product-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+  gap:20px;
+}
+@media(max-width:640px){
+  .product-grid{grid-template-columns:repeat(2, 1fr); gap:12px;}
+  .product-grid .product-info{padding:10px 12px 12px !important;}
+  .product-grid h3{font-size:12.5px !important; margin-bottom:4px !important;}
+  .product-grid .price-row{margin-bottom:8px !important;}
+  .product-grid .price-row span{font-size:13px !important;}
+  .product-grid .btn-primary{font-size:11.5px !important; padding:9px 8px !important;}
+}
+@media(max-width:380px){
+  .product-grid{gap:9px;}
+}
 @media(max-width:900px){
   .nav-links-desktop{display:none !important;}
   .mobile-menu-btn{display:flex !important; align-items:center; justify-content:center;}
