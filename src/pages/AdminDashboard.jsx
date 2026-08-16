@@ -454,7 +454,17 @@ function OrdersPanel() {
           </div>
           {expanded === o.id && (
             <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
-              {o.address && <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 10 }}>Manzil: {o.address}</p>}
+              {o.address && <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginBottom: 6 }}>Manzil izohi: {o.address}</p>}
+              {o.lat && o.lng && (
+                <a
+                  href={`https://www.google.com/maps?q=${o.lat},${o.lng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-block', fontSize: 13, color: 'var(--coral)', fontWeight: 700, marginBottom: 10 }}
+                >
+                  📍 Xaritada ko'rish
+                </a>
+              )}
               {(items[o.id] || []).map(it => (
                 <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13.5, padding: '4px 0' }}>
                   <span>{it.product_name} × {it.qty}</span>

@@ -13,17 +13,20 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Telegram sozlanmagan (env var yo\'q)' })
   }
 
-  const { customerName, phone, address, total, items } = req.body || {}
+  const { customerName, phone, address, total, items, lat, lng } = req.body || {}
 
   const itemsText = (items || [])
     .map(i => `• ${i.name} ×${i.qty} — ${Number(i.price * i.qty).toLocaleString('uz-UZ')} so'm`)
     .join('\n')
 
+  const mapLine = (lat && lng) ? `\n📍 Xarita: https://www.google.com/maps?q=${lat},${lng}\n` : ''
+
   const text =
     `🛍 Yangi buyurtma!\n\n` +
     `Mijoz: ${customerName}\n` +
     `Telefon: ${phone}\n` +
-    (address ? `Manzil: ${address}\n` : '') +
+    (address ? `Manzil izohi: ${address}\n` : '') +
+    mapLine +
     `\n${itemsText}\n\n` +
     `Jami: ${Number(total).toLocaleString('uz-UZ')} so'm`
 

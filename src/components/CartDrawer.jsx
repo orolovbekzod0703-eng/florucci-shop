@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '../lib/CartContext.jsx'
 import { supabase } from '../lib/supabaseClient.js'
+import LocationPicker from './LocationPicker.jsx'
 
 export default function CartDrawer() {
   const { items, removeItem, setQty, total, open, setOpen, clear } = useCart()
@@ -14,6 +15,7 @@ export default function CartDrawer() {
   const [authNotice, setAuthNotice] = useState('')
 
   const [form, setForm] = useState({ name: '', phone: '', address: '' })
+  const [location, setLocation] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -98,6 +100,8 @@ export default function CartDrawer() {
           total,
           status: 'yangi',
           user_id: session.user.id,
+          lat: location?.lat ?? null,
+          lng: location?.lng ?? null,
         })
         .select()
         .single()
@@ -124,6 +128,8 @@ export default function CartDrawer() {
           address: form.address,
           total,
           items,
+          lat: location?.lat,
+          lng: location?.lng,
         }),
       }).catch(() => {})
 
@@ -140,6 +146,7 @@ export default function CartDrawer() {
     setOpen(false)
     setStep('cart')
     setForm({ name: '', phone: '', address: '' })
+    setLocation(null)
     setAuthForm({ email: '', password: '', name: '', phone: '' })
     setError('')
     setAuthError('')
@@ -251,8 +258,12 @@ export default function CartDrawer() {
               <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+998 90 123 45 67" />
             </div>
             <div className="field">
-              <label>Manzil (ixtiyoriy)</label>
-              <textarea rows={3} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Yetkazib berish manzili" />
+              <label>Manzil (ixtiyoriy izoh — masalan, qavat, xonadon)</label>
+              <textarea rows={2} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="Qo'shimcha manzil izohi" />
+            </div>
+            <div className="field">
+              <label>Yetkazib berish joyi (xaritadan belgilang)</label>
+              <LocationPicker value={location} onChange={setLocation} />
             </div>
             {error && <p style={{ color: 'var(--coral)', fontSize: 13, marginBottom: 12 }}>{error}</p>}
             <div style={totalRow}>

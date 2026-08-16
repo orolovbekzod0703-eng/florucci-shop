@@ -53,7 +53,15 @@ Kategoriyalar endi bazada saqlanadi, admin panel orqali yangi kategoriya qo'shis
 2. Admin panel → Mahsulotlar → forma ichidagi "Kategoriya" maydonining ostida yangi kategoriya nomini yozib "Qo'shish"ni bosing — u darhol tanlov ro'yxatiga va saytga qo'shiladi
 3. Agar biror kategoriyada hali mahsulot bo'lmasa, saytda "Bu bo'limga hali mahsulot qo'shilmagan" deb ko'rsatiladi (kategoriya yashirinmaydi)
 
-## 7. Telegram xabarnomasi
+## 7. Xaritadan yetkazib berish joyi
+
+Buyurtma berishda mijoz xaritadan (bepul OpenStreetMap, Google'ning pullik API kaliti shart emas) o'z joyini belgilaydi.
+
+1. SQL Editor'da `supabase_location.sql` faylini ishga tushiring
+2. Boshqa hech narsa kerak emas — checkout formasida xarita avtomatik chiqadi
+3. Admin panelda buyurtmani ochsangiz, "📍 Xaritada ko'rish" havolasi orqali Google Maps'da ochib ko'rishingiz mumkin
+
+## 8. Telegram xabarnomasi
 
 Yangi buyurtma tushganda botingizga avtomatik xabar keladi.
 
@@ -68,13 +76,13 @@ Yangi buyurtma tushganda botingizga avtomatik xabar keladi.
 
 **Eslatma:** bu funksiya faqat Vercel'da ishlaydi (`npm run dev` bilan lokal ishga tushirganda emas), chunki u serverless funksiya. Token hech qachon kodga yoki GitHub'ga yozilmaydi — faqat Vercel'ning maxfiy muhit o'zgaruvchisida turadi.
 
-## 8. Admin panel
+## 9. Admin panel
 
 `/admin/login` manziliga o'ting va Supabase'da yaratgan admin email/parolingiz bilan kiring. U yerdan:
 - Mahsulot qo'shish, tahrirlash, o'chirish
 - Buyurtmalarni ko'rish va holatini yangilash (yangi → tayyorlanmoqda → yuborildi → yetkazildi)
 
-## 9. Vercel'ga deploy qilish
+## 10. Vercel'ga deploy qilish
 
 1. Loyihani GitHub'ga yuklang
 2. [vercel.com](https://vercel.com) → **New Project** → repo'ni tanlang
