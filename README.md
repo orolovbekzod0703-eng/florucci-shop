@@ -53,13 +53,28 @@ Kategoriyalar endi bazada saqlanadi, admin panel orqali yangi kategoriya qo'shis
 2. Admin panel → Mahsulotlar → forma ichidagi "Kategoriya" maydonining ostida yangi kategoriya nomini yozib "Qo'shish"ni bosing — u darhol tanlov ro'yxatiga va saytga qo'shiladi
 3. Agar biror kategoriyada hali mahsulot bo'lmasa, saytda "Bu bo'limga hali mahsulot qo'shilmagan" deb ko'rsatiladi (kategoriya yashirinmaydi)
 
-## 7. Admin panel
+## 7. Telegram xabarnomasi
+
+Yangi buyurtma tushganda botingizga avtomatik xabar keladi.
+
+1. Botingizga (BotFather orqali yaratgan) o'zingiz Telegram'da yozing, masalan "salom" deb — bu bot sizni "ko'rishi" uchun kerak
+2. Brauzeringizda shu manzilga o'ting (TOKEN o'rniga bot tokeningizni qo'ying):
+   `https://api.telegram.org/botTOKEN/getUpdates`
+3. Chiqqan JSON ichidan `"chat":{"id":...}` qiymatini toping — bu sizning `chat_id`ingiz
+4. Vercel Dashboard → loyihangiz → **Settings → Environment Variables**'ga qo'shing:
+   - `TELEGRAM_BOT_TOKEN` = bot tokeningiz
+   - `TELEGRAM_CHAT_ID` = topgan chat_id
+5. Qayta deploy qiling
+
+**Eslatma:** bu funksiya faqat Vercel'da ishlaydi (`npm run dev` bilan lokal ishga tushirganda emas), chunki u serverless funksiya. Token hech qachon kodga yoki GitHub'ga yozilmaydi — faqat Vercel'ning maxfiy muhit o'zgaruvchisida turadi.
+
+## 8. Admin panel
 
 `/admin/login` manziliga o'ting va Supabase'da yaratgan admin email/parolingiz bilan kiring. U yerdan:
 - Mahsulot qo'shish, tahrirlash, o'chirish
 - Buyurtmalarni ko'rish va holatini yangilash (yangi → tayyorlanmoqda → yuborildi → yetkazildi)
 
-## 8. Vercel'ga deploy qilish
+## 9. Vercel'ga deploy qilish
 
 1. Loyihani GitHub'ga yuklang
 2. [vercel.com](https://vercel.com) → **New Project** → repo'ni tanlang

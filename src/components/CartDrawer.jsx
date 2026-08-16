@@ -114,6 +114,19 @@ export default function CartDrawer() {
       const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
       if (itemsErr) throw itemsErr
 
+      // Telegram xabarnomasi — muvaffaqiyatsiz bo'lsa ham buyurtmaga ta'sir qilmasin
+      fetch('/api/notify-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: form.name,
+          phone: form.phone,
+          address: form.address,
+          total,
+          items,
+        }),
+      }).catch(() => {})
+
       setStep('done')
       clear()
     } catch (err) {
