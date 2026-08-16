@@ -84,6 +84,10 @@ export default function CartDrawer() {
       setError('Ism va telefon raqamni kiriting')
       return
     }
+    if (!location && !form.address.trim()) {
+      setError("Manzilni yozing yoki xaritadan joyingizni belgilang")
+      return
+    }
     if (!session) {
       setStep('auth')
       return

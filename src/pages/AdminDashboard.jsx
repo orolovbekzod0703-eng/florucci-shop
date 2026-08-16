@@ -244,6 +244,7 @@ function ProductsPanel() {
     setUploading(true)
     setError('')
     try {
+      const oldUrl = form.image_url
       const blob = await getCroppedImageBlob(cropSrc, croppedAreaPixels)
       const path = `${Date.now()}.jpg`
       const { error: uploadErr } = await supabase.storage.from('product-images').upload(path, blob, { contentType: 'image/jpeg' })
@@ -251,6 +252,11 @@ function ProductsPanel() {
       const { data } = supabase.storage.from('product-images').getPublicUrl(path)
       setForm(f => ({ ...f, image_url: data.publicUrl }))
       cancelCrop()
+      // Eski rasmni Storage'dan tozalab yuboramiz (agar shu bucket'dan bo'lsa)
+      if (oldUrl && oldUrl.includes('/product-images/')) {
+        const oldPath = oldUrl.split('/product-images/')[1]
+        if (oldPath) supabase.storage.from('product-images').remove([oldPath]).catch(() => {})
+      }
     } catch (err) {
       setError('Rasm yuklashda xatolik: ' + err.message)
     } finally {
