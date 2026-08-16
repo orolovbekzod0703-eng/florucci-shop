@@ -1,10 +1,28 @@
-import { createContext, useContext, useState, useMemo } from 'react'
+import { createContext, useContext, useState, useMemo, useEffect } from 'react'
 
 const CartContext = createContext(null)
+const STORAGE_KEY = 'florucci_cart'
+
+function loadStoredCart() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
 
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]) // {id, name, price, qty, image_url}
+  const [items, setItems] = useState(loadStoredCart) // {id, name, price, qty, image_url}
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    } catch {
+      // saqlashda xatolik bo'lsa e'tiborsiz qoldiramiz
+    }
+  }, [items])
 
   function addItem(product) {
     setItems(prev => {
