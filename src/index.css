@@ -82,4 +82,12 @@ input, textarea, select{font-family:inherit;}
 @media(max-width:900px){
   .nav-links-desktop{display:none !important;}
   .mobile-menu-btn{display:flex !important; align-items:center; justify-content:center;}
+  .admin-stats-grid{grid-template-columns:repeat(2,1fr) !important;}
+  .admin-products-grid{grid-template-columns:1fr !important;}
+  .admin-product-form{position:static !important; top:auto !important;}
+}
+@media(max-width:520px){
+  .admin-stats-grid{grid-template-columns:1fr !important;}
+  .admin-content{padding:24px 16px !important;}
+  .admin-topbar{padding:14px 16px !important;}
 }

@@ -18,7 +18,7 @@ const cropOverlayStyle = { position: 'fixed', inset: 0, background: 'rgba(51,38,
 const cropModalStyle = { background: '#fff', borderRadius: 20, padding: 22, width: 420, maxWidth: '94vw' }
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState('products')
+  const [tab, setTab] = useState('dashboard')
   const navigate = useNavigate()
 
   async function logout() {
@@ -28,18 +28,21 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cream)' }}>
-      <div style={{ background: 'var(--ink)', color: '#fff', padding: '16px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontFamily: 'Fraunces', fontWeight: 900, fontSize: 20, color: '#fff' }}>Florucci · Admin</div>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+      <div className="admin-topbar" style={{ background: 'var(--ink)', color: '#fff', padding: '16px 20px' }}>
+        <div style={{ fontFamily: 'Fraunces', fontWeight: 900, fontSize: 20, color: '#fff', marginBottom: 10 }}>Florucci · Admin</div>
+        <div className="admin-tabs" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button onClick={() => setTab('dashboard')} style={tabBtn(tab === 'dashboard')}>Dashboard</button>
           <button onClick={() => setTab('products')} style={tabBtn(tab === 'products')}>Mahsulotlar</button>
           <button onClick={() => setTab('orders')} style={tabBtn(tab === 'orders')}>Buyurtmalar</button>
-          <button onClick={logout} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '8px 16px', borderRadius: 100, fontSize: 13 }}>
+          <button onClick={logout} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', padding: '8px 16px', borderRadius: 100, fontSize: 13, marginLeft: 'auto' }}>
             Chiqish
           </button>
         </div>
       </div>
-      <div className="wrap" style={{ padding: '40px 32px' }}>
-        {tab === 'products' ? <ProductsPanel /> : <OrdersPanel />}
+      <div className="wrap admin-content" style={{ padding: '40px 32px' }}>
+        {tab === 'dashboard' && <DashboardPanel onNavigate={setTab} />}
+        {tab === 'products' && <ProductsPanel />}
+        {tab === 'orders' && <OrdersPanel />}
       </div>
     </div>
   )
@@ -56,6 +59,87 @@ function tabBtn(active) {
     fontSize: 13.5,
   }
 }
+
+function DashboardPanel({ onNavigate }) {
+  const [stats, setStats] = useState(null)
+  const [recentOrders, setRecentOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const [productsRes, ordersRes] = await Promise.all([
+        supabase.from('products').select('id, in_stock', { count: 'exact' }),
+        supabase.from('orders').select('id, total, status, customer_name, created_at').order('created_at', { ascending: false }),
+      ])
+      const products = productsRes.data || []
+      const orders = ordersRes.data || []
+      const revenue = orders
+        .filter(o => o.status !== 'bekor qilindi')
+        .reduce((sum, o) => sum + Number(o.total || 0), 0)
+      setStats({
+        productsCount: products.length,
+        outOfStockCount: products.filter(p => p.in_stock === false).length,
+        ordersCount: orders.length,
+        newOrdersCount: orders.filter(o => o.status === 'yangi').length,
+        revenue,
+      })
+      setRecentOrders(orders.slice(0, 5))
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  if (loading) return <p>Yuklanmoqda...</p>
+
+  return (
+    <div>
+      <div className="admin-stats-grid" style={statsGridStyle}>
+        <StatCard label="Jami tushum" value={`${stats.revenue.toLocaleString('uz-UZ')} so'm`} accent="var(--coral)" />
+        <StatCard label="Buyurtmalar" value={stats.ordersCount} accent="var(--olive)" onClick={() => onNavigate('orders')} />
+        <StatCard label="Yangi buyurtmalar" value={stats.newOrdersCount} accent="var(--mustard)" onClick={() => onNavigate('orders')} />
+        <StatCard label="Mahsulotlar" value={stats.productsCount} accent="var(--pink)" onClick={() => onNavigate('products')} sub={stats.outOfStockCount ? `${stats.outOfStockCount} ta tugagan` : null} />
+      </div>
+
+      <div className="card" style={{ padding: 20, marginTop: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ fontSize: 16 }}>So'nggi buyurtmalar</h3>
+          <button className="btn-ghost" onClick={() => onNavigate('orders')}>Barchasi →</button>
+        </div>
+        {recentOrders.length === 0 ? (
+          <p style={{ color: 'var(--ink-soft)', fontSize: 14 }}>Hozircha buyurtma yo'q.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {recentOrders.map(o => (
+              <div key={o.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{o.customer_name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{new Date(o.created_at).toLocaleString('uz-UZ')}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>{Number(o.total).toLocaleString('uz-UZ')} so'm</div>
+                  <span className="badge badge-status" style={{ fontSize: 10.5 }}>{o.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function StatCard({ label, value, accent, sub, onClick }) {
+  return (
+    <div className="card" style={{ padding: 18, cursor: onClick ? 'pointer' : 'default' }} onClick={onClick}>
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: accent, marginBottom: 10 }} />
+      <div style={{ fontSize: 22, fontWeight: 800 }}>{value}</div>
+      <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', marginTop: 2 }}>{label}</div>
+      {sub && <div style={{ fontSize: 11, color: 'var(--coral)', marginTop: 4 }}>{sub}</div>}
+    </div>
+  )
+}
+
+const statsGridStyle = { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }
 
 function ProductsPanel() {
   const [products, setProducts] = useState([])
@@ -188,7 +272,7 @@ function ProductsPanel() {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 32, alignItems: 'flex-start' }}>
+    <div className="admin-products-grid" style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 32, alignItems: 'flex-start' }}>
       {cropSrc && (
         <div style={cropOverlayStyle}>
           <div style={cropModalStyle}>
@@ -221,7 +305,7 @@ function ProductsPanel() {
           </div>
         </div>
       )}
-      <form onSubmit={handleSubmit} className="card" style={{ padding: 24, position: 'sticky', top: 20 }}>
+      <form onSubmit={handleSubmit} className="card admin-product-form" style={{ padding: 24, position: 'sticky', top: 20 }}>
         <h3 style={{ fontSize: 17, marginBottom: 18 }}>{form.id ? 'Mahsulotni tahrirlash' : "Yangi mahsulot qo'shish"}</h3>
         <div className="field">
           <label>Nomi</label>
@@ -353,14 +437,14 @@ function OrdersPanel() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {orders.map(o => (
         <div key={o.id} className="card" style={{ padding: 16 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => toggleExpand(o.id)}>
-            <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', flexWrap: 'wrap', gap: 10 }} onClick={() => toggleExpand(o.id)}>
+            <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 700 }}>{o.customer_name} · {o.phone}</div>
               <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>
                 {new Date(o.created_at).toLocaleString('uz-UZ')} · {Number(o.total).toLocaleString('uz-UZ')} so'm
               </div>
             </div>
-            <select value={o.status} onChange={e => { e.stopPropagation(); updateStatus(o.id, e.target.value) }} onClick={e => e.stopPropagation()} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line)' }}>
+            <select value={o.status} onChange={e => { e.stopPropagation(); updateStatus(o.id, e.target.value) }} onClick={e => e.stopPropagation()} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line)', flex: 'none' }}>
               <option value="yangi">Yangi</option>
               <option value="tayyorlanmoqda">Tayyorlanmoqda</option>
               <option value="yuborildi">Yuborildi</option>

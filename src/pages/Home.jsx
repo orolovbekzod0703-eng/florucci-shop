@@ -49,7 +49,7 @@ export default function Home() {
       <section style={{ background: 'var(--cream-2)', padding: '70px 0 60px' }}>
         <div className="wrap" style={{ textAlign: 'center' }}>
           <div className="eyebrow" style={{ marginBottom: 14 }}>Har kun bir bayramga aylansin</div>
-          <h1 style={{ fontSize: 44, lineHeight: 1.1, marginBottom: 18, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
+          <h1 style={{ fontSize: 'clamp(30px, 6vw, 44px)', lineHeight: 1.1, marginBottom: 18, maxWidth: 640, marginLeft: 'auto', marginRight: 'auto' }}>
             Kichkina his-tuyg'ular, <em style={{ color: 'var(--coral)', fontStyle: 'italic' }}>rang-barang</em> xotiralar
           </h1>
           <p style={{ color: 'var(--ink-soft)', maxWidth: 460, margin: '0 auto 26px', fontSize: 16, lineHeight: 1.6 }}>
@@ -62,7 +62,7 @@ export default function Home() {
       <section id="catalog" className="wrap" style={{ padding: '60px 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <div className="eyebrow" style={{ justifyContent: 'center', display: 'flex', marginBottom: 10 }}>Katalog</div>
-          <h2 style={{ fontSize: 32 }}>{activeCategoryLabel || 'Barcha mahsulotlar'}</h2>
+          <h2 style={{ fontSize: 'clamp(24px, 5vw, 32px)' }}>{activeCategoryLabel || 'Barcha mahsulotlar'}</h2>
         </div>
 
         <div style={{ maxWidth: 420, margin: '0 auto 24px', position: 'relative' }}>
