@@ -76,13 +76,19 @@ Yangi buyurtma tushganda botingizga avtomatik xabar keladi.
 
 **Eslatma:** bu funksiya faqat Vercel'da ishlaydi (`npm run dev` bilan lokal ishga tushirganda emas), chunki u serverless funksiya. Token hech qachon kodga yoki GitHub'ga yozilmaydi — faqat Vercel'ning maxfiy muhit o'zgaruvchisida turadi.
 
-## 9. Admin panel
+## 9. Mahsulot qoldig'i soni
+
+1. SQL Editor'da `supabase_stock.sql` faylini ishga tushiring — bu `stock_qty` ustunini va buyurtma tushganda qoldiqni xavfsiz kamaytiradigan funksiyani qo'shadi
+2. Admin panelda mahsulot qo'shish/tahrirlashda "Qoldiq soni" maydoniga son kiriting — har xariddan keyin avtomatik kamayadi, nolga yetganda mahsulot avtomatik "Tugagan" bo'lib qoladi
+3. Bo'sh qoldirsangiz, oldingidek faqat "Mavjud (sotuvda)" belgisi bilan qo'lda boshqarasiz
+
+## 10. Admin panel
 
 `/admin/login` manziliga o'ting va Supabase'da yaratgan admin email/parolingiz bilan kiring. U yerdan:
 - Mahsulot qo'shish, tahrirlash, o'chirish
 - Buyurtmalarni ko'rish va holatini yangilash (yangi → tayyorlanmoqda → yuborildi → yetkazildi)
 
-## 10. Vercel'ga deploy qilish
+## 11. Vercel'ga deploy qilish
 
 1. Loyihani GitHub'ga yuklang
 2. [vercel.com](https://vercel.com) → **New Project** → repo'ni tanlang

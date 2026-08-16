@@ -4,9 +4,11 @@ import { supabase } from '../lib/supabaseClient.js'
 import LocationPicker from './LocationPicker.jsx'
 
 export default function CartDrawer() {
-  const { items, removeItem, setQty, total, open, setOpen, clear } = useCart()
+  const { items, removeItem, setQty, updatePrice, total, open, setOpen, clear } = useCart()
   const [step, setStep] = useState('cart') // cart | auth | checkout | done
   const [session, setSession] = useState(null)
+  const [checking, setChecking] = useState(false)
+  const [cartNotice, setCartNotice] = useState('')
 
   const [authMode, setAuthMode] = useState('login') // login | register
   const [authForm, setAuthForm] = useState({ email: '', password: '', name: '', phone: '' })
@@ -27,7 +29,35 @@ export default function CartDrawer() {
 
   if (!open) return null
 
-  function goToCheckout() {
+  async function goToCheckout() {
+    setCartNotice('')
+    setChecking(true)
+    const ids = items.map(i => i.id)
+    const { data: freshProducts } = await supabase.from('products').select('id, price, in_stock, stock_qty').in('id', ids)
+    setChecking(false)
+
+    let hasChanges = false
+    const messages = []
+    ;(freshProducts || []).forEach(p => {
+      const cartItem = items.find(i => i.id === p.id)
+      if (!cartItem) return
+      const outOfStock = p.in_stock === false || (p.stock_qty != null && p.stock_qty <= 0)
+      if (outOfStock) {
+        hasChanges = true
+        messages.push(`"${cartItem.name}" tugagan, savatdan olib tashlandi`)
+        removeItem(p.id)
+      } else if (Number(p.price) !== Number(cartItem.price)) {
+        hasChanges = true
+        messages.push(`"${cartItem.name}" narxi yangilandi`)
+        updatePrice(p.id, Number(p.price))
+      }
+    })
+
+    if (hasChanges) {
+      setCartNotice(messages.join(' · '))
+      return
+    }
+
     if (session) {
       const meta = session.user.user_metadata || {}
       setForm(f => ({ ...f, name: meta.name || f.name, phone: meta.phone || f.phone }))
@@ -122,6 +152,11 @@ export default function CartDrawer() {
       const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
       if (itemsErr) throw itemsErr
 
+      // Qoldiq sonini kamaytiramiz (faqat stock_qty kuzatilayotgan mahsulotlarda ta'sir qiladi)
+      items.forEach(i => {
+        supabase.rpc('decrement_stock', { p_product_id: i.id, p_qty: i.qty }).then(() => {})
+      })
+
       // Telegram xabarnomasi — muvaffaqiyatsiz bo'lsa ham buyurtmaga ta'sir qilmasin
       fetch('/api/notify-order', {
         method: 'POST',
@@ -151,6 +186,7 @@ export default function CartDrawer() {
     setStep('cart')
     setForm({ name: '', phone: '', address: '' })
     setLocation(null)
+    setCartNotice('')
     setAuthForm({ email: '', password: '', name: '', phone: '' })
     setError('')
     setAuthError('')
@@ -194,12 +230,15 @@ export default function CartDrawer() {
             )}
             {items.length > 0 && (
               <>
+                {cartNotice && (
+                  <p style={{ fontSize: 12.5, color: 'var(--coral)', marginBottom: 10, lineHeight: 1.5 }}>{cartNotice}</p>
+                )}
                 <div style={totalRow}>
                   <span>Jami</span>
                   <strong>{total.toLocaleString('uz-UZ')} so'm</strong>
                 </div>
-                <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 14 }} onClick={goToCheckout}>
-                  Buyurtma berish →
+                <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 14 }} onClick={goToCheckout} disabled={checking}>
+                  {checking ? 'Tekshirilmoqda...' : 'Buyurtma berish →'}
                 </button>
               </>
             )}

@@ -4,7 +4,7 @@ import Cropper from 'react-easy-crop'
 import { supabase } from '../lib/supabaseClient.js'
 import { getCroppedImageBlob } from '../lib/cropImage.js'
 
-const EMPTY_FORM = { id: null, name: '', price: '', old_price: '', category: '', tag: '', image_url: '', in_stock: true }
+const EMPTY_FORM = { id: null, name: '', price: '', old_price: '', category: '', tag: '', image_url: '', in_stock: true, stock_qty: '' }
 
 function slugify(label) {
   const map = { "o'": 'o', "g'": 'g', ş: 's', ç: 'c' }
@@ -185,6 +185,18 @@ function ProductsPanel() {
     setNewCategory('')
   }
 
+  async function deleteCategory() {
+    if (!form.category) return
+    const cat = categories.find(c => c.slug === form.category)
+    if (!cat) return
+    if (!confirm(`"${cat.label}" kategoriyasini o'chirmoqchimisiz? Bu kategoriyadagi mahsulotlar o'chmaydi, faqat kategoriyasiz qoladi.`)) return
+    const { error } = await supabase.from('categories').delete().eq('id', cat.id)
+    if (error) { setError(error.message); return }
+    const remaining = categories.filter(c => c.id !== cat.id)
+    setCategories(remaining)
+    setForm(f => ({ ...f, category: remaining[0]?.slug || '' }))
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setSaving(true)
@@ -197,6 +209,7 @@ function ProductsPanel() {
       tag: form.tag || null,
       image_url: form.image_url || null,
       in_stock: form.in_stock,
+      stock_qty: form.stock_qty === '' ? null : Number(form.stock_qty),
     }
     let err
     if (form.id) {
@@ -220,6 +233,7 @@ function ProductsPanel() {
       tag: p.tag || '',
       image_url: p.image_url || '',
       in_stock: p.in_stock !== false,
+      stock_qty: p.stock_qty ?? '',
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -327,9 +341,21 @@ function ProductsPanel() {
         </div>
         <div className="field">
           <label>Kategoriya</label>
-          <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
-            {categories.map(c => <option key={c.id} value={c.slug}>{c.label}</option>)}
-          </select>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select style={{ flex: 1 }} value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>
+              {categories.map(c => <option key={c.id} value={c.slug}>{c.label}</option>)}
+            </select>
+            <button
+              type="button"
+              className="btn-ghost"
+              style={{ color: 'var(--coral)', border: '1.5px solid var(--line)', borderRadius: 10, padding: '0 12px' }}
+              onClick={deleteCategory}
+              disabled={!form.category}
+              title="Tanlangan kategoriyani o'chirish"
+            >
+              O'chirish
+            </button>
+          </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
             <input
               value={newCategory}
@@ -365,6 +391,16 @@ function ProductsPanel() {
             placeholder="yoki rasm havolasini (URL) qo'lda kiriting"
           />
         </div>
+        <div className="field">
+          <label>Qoldiq soni (ixtiyoriy)</label>
+          <input
+            type="number"
+            min="0"
+            value={form.stock_qty}
+            onChange={e => setForm({ ...form, stock_qty: e.target.value })}
+            placeholder="Bo'sh qoldirsangiz, faqat pastdagi belgi bilan boshqariladi"
+          />
+        </div>
         <div className="field" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <input type="checkbox" id="in_stock" style={{ width: 'auto' }} checked={form.in_stock} onChange={e => setForm({ ...form, in_stock: e.target.checked })} />
           <label htmlFor="in_stock" style={{ margin: 0 }}>Mavjud (sotuvda)</label>
@@ -392,6 +428,7 @@ function ProductsPanel() {
                   <div style={{ fontWeight: 700, fontSize: 14.5 }}>{p.name}</div>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-soft)' }}>
                     {categories.find(c => c.slug === p.category)?.label || p.category} · {Number(p.price).toLocaleString('uz-UZ')} so'm
+                    {p.stock_qty != null && ` · ${p.stock_qty} dona qoldi`}
                     {p.in_stock === false && ' · Tugagan'}
                   </div>
                 </div>

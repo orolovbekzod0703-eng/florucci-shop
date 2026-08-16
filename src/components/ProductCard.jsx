@@ -11,6 +11,7 @@ function colorFor(id) {
 export default function ProductCard({ product }) {
   const { addItem } = useCart()
   const bg = colorFor(product.id)
+  const isOutOfStock = product.in_stock === false || (product.stock_qty != null && product.stock_qty <= 0)
 
   return (
     <div className="card" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -41,9 +42,9 @@ export default function ProductCard({ product }) {
           className="btn-primary"
           style={{ marginTop: 'auto', justifyContent: 'center', fontSize: 13, padding: '11px 16px' }}
           onClick={() => addItem(product)}
-          disabled={product.in_stock === false}
+          disabled={isOutOfStock}
         >
-          {product.in_stock === false ? 'Tugagan' : "Savatga qo'shish"}
+          {isOutOfStock ? 'Tugagan' : "Savatga qo'shish"}
         </button>
       </div>
     </div>

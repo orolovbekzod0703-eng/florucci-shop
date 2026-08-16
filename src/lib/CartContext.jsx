@@ -44,6 +44,10 @@ export function CartProvider({ children }) {
     setItems(prev => prev.map(i => i.id === id ? { ...i, qty } : i))
   }
 
+  function updatePrice(id, price) {
+    setItems(prev => prev.map(i => i.id === id ? { ...i, price } : i))
+  }
+
   function clear() {
     setItems([])
   }
@@ -52,7 +56,7 @@ export function CartProvider({ children }) {
   const count = useMemo(() => items.reduce((sum, i) => sum + i.qty, 0), [items])
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, setQty, clear, total, count, open, setOpen }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, setQty, updatePrice, clear, total, count, open, setOpen }}>
       {children}
     </CartContext.Provider>
   )
